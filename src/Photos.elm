@@ -2,10 +2,11 @@ module Photos exposing (main)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (class, src)
+import Html.Attributes exposing (class, classList, src)
+import Html.Events exposing (onMouseEnter, onMouseLeave)
 import Http
-import Json.Decode exposing (Decoder, Value, at, bool, int, list, string, succeed)
-import Json.Decode.Pipeline exposing (optional, required)
+import Json.Decode exposing (Decoder, bool, list, string, succeed)
+import Json.Decode.Pipeline exposing (required)
 
 
 main : Program () Model Msg
@@ -27,7 +28,7 @@ type alias Photo =
 
 type Status
     = Loading
-    | Loaded (List Photo)
+    | Loaded (List Photo) String
     | Errored String
 
 
@@ -65,6 +66,8 @@ init () =
 
 type Msg
     = GotPhotos (Result Http.Error (List Photo))
+    | MouseEntered String
+    | MouseLeft
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -73,13 +76,32 @@ update msg model =
         GotPhotos (Ok photos) ->
             case photos of
                 first :: rest ->
-                    ( { model | status = Loaded photos }, Cmd.none )
+                    ( { model | status = Loaded photos "" }, Cmd.none )
 
                 [] ->
                     ( { model | status = Errored "0 photos found" }, Cmd.none )
 
         GotPhotos (Err _) ->
             ( { model | status = Errored "Server error!" }, Cmd.none )
+
+        MouseEntered hoveredPhotoId ->
+            ( { model | status = setHoveredPhotoId hoveredPhotoId model.status }, Cmd.none )
+
+        MouseLeft ->
+            ( { model | status = setHoveredPhotoId "" model.status }, Cmd.none )
+
+
+setHoveredPhotoId : String -> Status -> Status
+setHoveredPhotoId hoveredPhotoId status =
+    case status of
+        Loaded photos _ ->
+            Loaded photos hoveredPhotoId
+
+        Loading ->
+            status
+
+        Errored _ ->
+            status
 
 
 subscriptions : Model -> Sub Msg
@@ -91,8 +113,8 @@ view : Model -> Html Msg
 view model =
     div [] <|
         case model.status of
-            Loaded photos ->
-                [ viewPhotos photos ]
+            Loaded photos hoveredPhotoId ->
+                [ viewPhotos photos hoveredPhotoId ]
 
             Loading ->
                 [ text "Loading..." ]
@@ -101,15 +123,22 @@ view model =
                 [ text "Errored" ]
 
 
-viewPhotos : List Photo -> Html Msg
-viewPhotos photos =
-    main_ [ class "photos" ] (List.indexedMap viewImage photos)
+viewPhotos : List Photo -> String -> Html Msg
+viewPhotos photos hoveredPhotoId =
+    main_ [ class "photos" ] (List.indexedMap (viewImage hoveredPhotoId) photos)
 
 
-viewImage : Int -> Photo -> Html Msg
-viewImage index photo =
-    div [ class "image-container", class (getClass index) ]
+viewImage : String -> Int -> Photo -> Html Msg
+viewImage hoveredPhotoId index photo =
+    div
+        [ class "image-container"
+        , class (getClass index)
+        , onMouseEnter (MouseEntered photo.id)
+        , onMouseLeave MouseLeft
+        ]
         [ img [ src photo.url, class "image-grid" ] []
+        , i [ classList [ ( "ri-heart-line favorite", photo.id == hoveredPhotoId ) ] ] []
+        , i [ classList [ ( "ri-add-circle-line cart", photo.id == hoveredPhotoId ) ] ] []
         ]
 
 

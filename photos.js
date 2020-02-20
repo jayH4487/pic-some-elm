@@ -11009,63 +11009,137 @@ var $author$project$Photos$subscriptions = function (model) {
 var $author$project$Photos$Errored = function (a) {
 	return {$: 'Errored', a: a};
 };
-var $author$project$Photos$Loaded = function (a) {
-	return {$: 'Loaded', a: a};
-};
+var $author$project$Photos$Loaded = F2(
+	function (a, b) {
+		return {$: 'Loaded', a: a, b: b};
+	});
+var $author$project$Photos$setHoveredPhotoId = F2(
+	function (hoveredPhotoId, status) {
+		switch (status.$) {
+			case 'Loaded':
+				var photos = status.a;
+				return A2($author$project$Photos$Loaded, photos, hoveredPhotoId);
+			case 'Loading':
+				return status;
+			default:
+				return status;
+		}
+	});
 var $author$project$Photos$update = F2(
 	function (msg, model) {
-		if (msg.a.$ === 'Ok') {
-			var photos = msg.a.a;
-			if (photos.b) {
-				var first = photos.a;
-				var rest = photos.b;
+		switch (msg.$) {
+			case 'GotPhotos':
+				if (msg.a.$ === 'Ok') {
+					var photos = msg.a.a;
+					if (photos.b) {
+						var first = photos.a;
+						var rest = photos.b;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									status: A2($author$project$Photos$Loaded, photos, '')
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									status: $author$project$Photos$Errored('0 photos found')
+								}),
+							$elm$core$Platform$Cmd$none);
+					}
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Photos$Errored('Server error!')
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			case 'MouseEntered':
+				var hoveredPhotoId = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							status: $author$project$Photos$Loaded(photos)
+							status: A2($author$project$Photos$setHoveredPhotoId, hoveredPhotoId, model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
-			} else {
+			default:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							status: $author$project$Photos$Errored('0 photos found')
+							status: A2($author$project$Photos$setHoveredPhotoId, '', model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
-			}
-		} else {
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						status: $author$project$Photos$Errored('Server error!')
-					}),
-				$elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$html$Html$main_ = _VirtualDom_node('main');
+var $author$project$Photos$MouseEntered = function (a) {
+	return {$: 'MouseEntered', a: a};
+};
+var $author$project$Photos$MouseLeft = {$: 'MouseLeft'};
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$html$Html$Attributes$classList = function (classes) {
+	return $elm$html$Html$Attributes$class(
+		A2(
+			$elm$core$String$join,
+			' ',
+			A2(
+				$elm$core$List$map,
+				$elm$core$Tuple$first,
+				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
+};
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Photos$getClass = function (index) {
 	return (!A2($elm$core$Basics$modBy, 5, index)) ? 'big' : ((!A2($elm$core$Basics$modBy, 6, index)) ? 'wide' : '');
 };
+var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Events$onMouseEnter = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'mouseenter',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Events$onMouseLeave = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'mouseleave',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		$elm$html$Html$Attributes$stringProperty,
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
-var $author$project$Photos$viewImage = F2(
-	function (index, photo) {
+var $author$project$Photos$viewImage = F3(
+	function (hoveredPhotoId, index, photo) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
 					$elm$html$Html$Attributes$class('image-container'),
 					$elm$html$Html$Attributes$class(
-					$author$project$Photos$getClass(index))
+					$author$project$Photos$getClass(index)),
+					$elm$html$Html$Events$onMouseEnter(
+					$author$project$Photos$MouseEntered(photo.id)),
+					$elm$html$Html$Events$onMouseLeave($author$project$Photos$MouseLeft)
 				]),
 			_List_fromArray(
 				[
@@ -11076,18 +11150,48 @@ var $author$project$Photos$viewImage = F2(
 							$elm$html$Html$Attributes$src(photo.url),
 							$elm$html$Html$Attributes$class('image-grid')
 						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$i,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$classList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									'ri-heart-line favorite',
+									_Utils_eq(photo.id, hoveredPhotoId))
+								]))
+						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$i,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$classList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									'ri-add-circle-line cart',
+									_Utils_eq(photo.id, hoveredPhotoId))
+								]))
+						]),
 					_List_Nil)
 				]));
 	});
-var $author$project$Photos$viewPhotos = function (photos) {
-	return A2(
-		$elm$html$Html$main_,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('photos')
-			]),
-		A2($elm$core$List$indexedMap, $author$project$Photos$viewImage, photos));
-};
+var $author$project$Photos$viewPhotos = F2(
+	function (photos, hoveredPhotoId) {
+		return A2(
+			$elm$html$Html$main_,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('photos')
+				]),
+			A2(
+				$elm$core$List$indexedMap,
+				$author$project$Photos$viewImage(hoveredPhotoId),
+				photos));
+	});
 var $author$project$Photos$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -11097,9 +11201,10 @@ var $author$project$Photos$view = function (model) {
 			switch (_v0.$) {
 				case 'Loaded':
 					var photos = _v0.a;
+					var hoveredPhotoId = _v0.b;
 					return _List_fromArray(
 						[
-							$author$project$Photos$viewPhotos(photos)
+							A2($author$project$Photos$viewPhotos, photos, hoveredPhotoId)
 						]);
 				case 'Loading':
 					return _List_fromArray(
@@ -11118,4 +11223,4 @@ var $author$project$Photos$view = function (model) {
 var $author$project$Photos$main = $elm$browser$Browser$element(
 	{init: $author$project$Photos$init, subscriptions: $author$project$Photos$subscriptions, update: $author$project$Photos$update, view: $author$project$Photos$view});
 _Platform_export({'Photos':{'init':$author$project$Photos$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Photos.Msg","aliases":{"Photos.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"}},"unions":{"Photos.Msg":{"args":[],"tags":{"GotPhotos":["Result.Result Http.Error (List.List Photos.Photo)"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Photos.Msg","aliases":{"Photos.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"}},"unions":{"Photos.Msg":{"args":[],"tags":{"GotPhotos":["Result.Result Http.Error (List.List Photos.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
