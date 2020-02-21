@@ -176,23 +176,33 @@ viewImage hoveredPhotoId cartItems index photo =
         , onMouseLeave MouseLeft
         ]
         [ img [ src photo.url, class "image-grid" ] []
-        , i
-            [ classList
-                [ ( "ri-heart-fill favorite", photo.isFavorite )
-                , ( "ri-heart-line favorite", photo.id == hoveredPhotoId && not photo.isFavorite )
-                ]
-            , onClick (ToggleFavorite photo.id)
-            ]
-            []
-        , i
-            [ classList
-                [ ( "ri-shopping-cart-fill cart", List.member photo cartItems )
-                , ( "ri-add-circle-line cart", photo.id == hoveredPhotoId && not (List.member photo cartItems) )
-                ]
-            , onClick (AddToCart photo)
-            ]
-            []
+        , viewHeartIcon hoveredPhotoId photo
+        , viewCartIcon hoveredPhotoId photo cartItems
         ]
+
+
+viewHeartIcon : String -> Photo -> Html Msg
+viewHeartIcon hoveredPhotoId photo =
+    if photo.isFavorite then
+        i [ class "ri-heart-fill favorite", onClick (ToggleFavorite photo.id) ] []
+
+    else if hoveredPhotoId == photo.id then
+        i [ class "ri-heart-line favorite", onClick (ToggleFavorite photo.id) ] []
+
+    else
+        i [] []
+
+
+viewCartIcon : String -> Photo -> CartItems -> Html Msg
+viewCartIcon hoveredPhotoId photo cartItems =
+    if List.member photo.id (List.map .id cartItems) then
+        i [ class "ri-shopping-cart-fill cart" ] []
+
+    else if hoveredPhotoId == photo.id then
+        i [ class "ri-add-circle-line cart", onClick (AddToCart photo) ] []
+
+    else
+        i [] []
 
 
 getClass : Int -> String

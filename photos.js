@@ -11121,43 +11121,37 @@ var $author$project$Photos$update = F2(
 		}
 	});
 var $elm$html$Html$main_ = _VirtualDom_node('main');
-var $author$project$Photos$AddToCart = function (a) {
-	return {$: 'AddToCart', a: a};
-};
 var $author$project$Photos$MouseEntered = function (a) {
 	return {$: 'MouseEntered', a: a};
 };
 var $author$project$Photos$MouseLeft = {$: 'MouseLeft'};
-var $author$project$Photos$ToggleFavorite = function (a) {
-	return {$: 'ToggleFavorite', a: a};
-};
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var $elm$html$Html$Attributes$classList = function (classes) {
-	return $elm$html$Html$Attributes$class(
-		A2(
-			$elm$core$String$join,
-			' ',
-			A2(
-				$elm$core$List$map,
-				$elm$core$Tuple$first,
-				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
-};
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Photos$getClass = function (index) {
 	return (!A2($elm$core$Basics$modBy, 5, index)) ? 'big' : ((!A2($elm$core$Basics$modBy, 6, index)) ? 'wide' : '');
 };
-var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Events$onMouseEnter = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'mouseenter',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Events$onMouseLeave = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'mouseleave',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $author$project$Photos$AddToCart = function (a) {
+	return {$: 'AddToCart', a: a};
+};
+var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -11188,24 +11182,55 @@ var $elm$core$List$member = F2(
 			},
 			xs);
 	});
-var $elm$html$Html$Events$onMouseEnter = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'mouseenter',
-		$elm$json$Json$Decode$succeed(msg));
+var $author$project$Photos$viewCartIcon = F3(
+	function (hoveredPhotoId, photo, cartItems) {
+		return A2(
+			$elm$core$List$member,
+			photo.id,
+			A2(
+				$elm$core$List$map,
+				function ($) {
+					return $.id;
+				},
+				cartItems)) ? A2(
+			$elm$html$Html$i,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('ri-shopping-cart-fill cart')
+				]),
+			_List_Nil) : (_Utils_eq(hoveredPhotoId, photo.id) ? A2(
+			$elm$html$Html$i,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('ri-add-circle-line cart'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Photos$AddToCart(photo))
+				]),
+			_List_Nil) : A2($elm$html$Html$i, _List_Nil, _List_Nil));
+	});
+var $author$project$Photos$ToggleFavorite = function (a) {
+	return {$: 'ToggleFavorite', a: a};
 };
-var $elm$html$Html$Events$onMouseLeave = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'mouseleave',
-		$elm$json$Json$Decode$succeed(msg));
-};
-var $elm$html$Html$Attributes$src = function (url) {
-	return A2(
-		$elm$html$Html$Attributes$stringProperty,
-		'src',
-		_VirtualDom_noJavaScriptOrHtmlUri(url));
-};
+var $author$project$Photos$viewHeartIcon = F2(
+	function (hoveredPhotoId, photo) {
+		return photo.isFavorite ? A2(
+			$elm$html$Html$i,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('ri-heart-fill favorite'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Photos$ToggleFavorite(photo.id))
+				]),
+			_List_Nil) : (_Utils_eq(hoveredPhotoId, photo.id) ? A2(
+			$elm$html$Html$i,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('ri-heart-line favorite'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Photos$ToggleFavorite(photo.id))
+				]),
+			_List_Nil) : A2($elm$html$Html$i, _List_Nil, _List_Nil));
+	});
 var $author$project$Photos$viewImage = F4(
 	function (hoveredPhotoId, cartItems, index, photo) {
 		return A2(
@@ -11229,40 +11254,8 @@ var $author$project$Photos$viewImage = F4(
 							$elm$html$Html$Attributes$class('image-grid')
 						]),
 					_List_Nil),
-					A2(
-					$elm$html$Html$i,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$classList(
-							_List_fromArray(
-								[
-									_Utils_Tuple2('ri-heart-fill favorite', photo.isFavorite),
-									_Utils_Tuple2(
-									'ri-heart-line favorite',
-									_Utils_eq(photo.id, hoveredPhotoId) && (!photo.isFavorite))
-								])),
-							$elm$html$Html$Events$onClick(
-							$author$project$Photos$ToggleFavorite(photo.id))
-						]),
-					_List_Nil),
-					A2(
-					$elm$html$Html$i,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$classList(
-							_List_fromArray(
-								[
-									_Utils_Tuple2(
-									'ri-shopping-cart-fill cart',
-									A2($elm$core$List$member, photo, cartItems)),
-									_Utils_Tuple2(
-									'ri-add-circle-line cart',
-									_Utils_eq(photo.id, hoveredPhotoId) && (!A2($elm$core$List$member, photo, cartItems)))
-								])),
-							$elm$html$Html$Events$onClick(
-							$author$project$Photos$AddToCart(photo))
-						]),
-					_List_Nil)
+					A2($author$project$Photos$viewHeartIcon, hoveredPhotoId, photo),
+					A3($author$project$Photos$viewCartIcon, hoveredPhotoId, photo, cartItems)
 				]));
 	});
 var $author$project$Photos$viewPhotos = F3(
