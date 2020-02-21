@@ -3,7 +3,7 @@ module Photos exposing (main)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, src)
-import Html.Events exposing (onMouseEnter, onMouseLeave)
+import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Http
 import Json.Decode exposing (Decoder, bool, list, string, succeed)
 import Json.Decode.Pipeline exposing (required)
@@ -26,6 +26,10 @@ type alias Photo =
     }
 
 
+type alias CartItems =
+    List Photo
+
+
 type Status
     = Loading
     | Loaded (List Photo) String
@@ -34,12 +38,14 @@ type Status
 
 type alias Model =
     { status : Status
+    , cartItems : CartItems
     }
 
 
 initialModel : Model
 initialModel =
     { status = Loading
+    , cartItems = []
     }
 
 
@@ -68,6 +74,8 @@ type Msg
     = GotPhotos (Result Http.Error (List Photo))
     | MouseEntered String
     | MouseLeft
+    | ToggleFavorite String
+    | AddToCart Photo
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -90,12 +98,43 @@ update msg model =
         MouseLeft ->
             ( { model | status = setHoveredPhotoId "" model.status }, Cmd.none )
 
+        ToggleFavorite photoId ->
+            ( { model | status = setFavorite photoId model.status }, Cmd.none )
+
+        AddToCart photo ->
+            ( { model | cartItems = model.cartItems ++ [ photo ] }, Cmd.none )
+
 
 setHoveredPhotoId : String -> Status -> Status
 setHoveredPhotoId hoveredPhotoId status =
     case status of
         Loaded photos _ ->
             Loaded photos hoveredPhotoId
+
+        Loading ->
+            status
+
+        Errored _ ->
+            status
+
+
+setFavorite : String -> Status -> Status
+setFavorite photoId status =
+    case status of
+        Loaded photos hoveredPhotoId ->
+            let
+                updatedPhotos =
+                    List.map
+                        (\photo ->
+                            if photo.id == photoId then
+                                { photo | isFavorite = not photo.isFavorite }
+
+                            else
+                                photo
+                        )
+                        photos
+            in
+            Loaded updatedPhotos hoveredPhotoId
 
         Loading ->
             status
@@ -114,7 +153,7 @@ view model =
     div [] <|
         case model.status of
             Loaded photos hoveredPhotoId ->
-                [ viewPhotos photos hoveredPhotoId ]
+                [ viewPhotos photos hoveredPhotoId model.cartItems ]
 
             Loading ->
                 [ text "Loading..." ]
@@ -123,13 +162,13 @@ view model =
                 [ text "Errored" ]
 
 
-viewPhotos : List Photo -> String -> Html Msg
-viewPhotos photos hoveredPhotoId =
-    main_ [ class "photos" ] (List.indexedMap (viewImage hoveredPhotoId) photos)
+viewPhotos : List Photo -> String -> CartItems -> Html Msg
+viewPhotos photos hoveredPhotoId cartItems =
+    main_ [ class "photos" ] (List.indexedMap (viewImage hoveredPhotoId cartItems) photos)
 
 
-viewImage : String -> Int -> Photo -> Html Msg
-viewImage hoveredPhotoId index photo =
+viewImage : String -> CartItems -> Int -> Photo -> Html Msg
+viewImage hoveredPhotoId cartItems index photo =
     div
         [ class "image-container"
         , class (getClass index)
@@ -137,8 +176,22 @@ viewImage hoveredPhotoId index photo =
         , onMouseLeave MouseLeft
         ]
         [ img [ src photo.url, class "image-grid" ] []
-        , i [ classList [ ( "ri-heart-line favorite", photo.id == hoveredPhotoId ) ] ] []
-        , i [ classList [ ( "ri-add-circle-line cart", photo.id == hoveredPhotoId ) ] ] []
+        , i
+            [ classList
+                [ ( "ri-heart-fill favorite", photo.isFavorite )
+                , ( "ri-heart-line favorite", photo.id == hoveredPhotoId && not photo.isFavorite )
+                ]
+            , onClick (ToggleFavorite photo.id)
+            ]
+            []
+        , i
+            [ classList
+                [ ( "ri-shopping-cart-fill cart", List.member photo cartItems )
+                , ( "ri-add-circle-line cart", photo.id == hoveredPhotoId && not (List.member photo cartItems) )
+                ]
+            , onClick (AddToCart photo)
+            ]
+            []
         ]
 
 

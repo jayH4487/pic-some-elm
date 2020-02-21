@@ -10997,7 +10997,7 @@ var $author$project$Photos$initialCmd = $elm$http$Http$get(
 		url: 'https://raw.githubusercontent.com/bobziroll/scrimba-react-bootcamp-images/master/images.json'
 	});
 var $author$project$Photos$Loading = {$: 'Loading'};
-var $author$project$Photos$initialModel = {status: $author$project$Photos$Loading};
+var $author$project$Photos$initialModel = {cartItems: _List_Nil, status: $author$project$Photos$Loading};
 var $author$project$Photos$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Photos$initialModel, $author$project$Photos$initialCmd);
 };
@@ -11012,6 +11012,27 @@ var $author$project$Photos$Errored = function (a) {
 var $author$project$Photos$Loaded = F2(
 	function (a, b) {
 		return {$: 'Loaded', a: a, b: b};
+	});
+var $author$project$Photos$setFavorite = F2(
+	function (photoId, status) {
+		switch (status.$) {
+			case 'Loaded':
+				var photos = status.a;
+				var hoveredPhotoId = status.b;
+				var updatedPhotos = A2(
+					$elm$core$List$map,
+					function (photo) {
+						return _Utils_eq(photo.id, photoId) ? _Utils_update(
+							photo,
+							{isFavorite: !photo.isFavorite}) : photo;
+					},
+					photos);
+				return A2($author$project$Photos$Loaded, updatedPhotos, hoveredPhotoId);
+			case 'Loading':
+				return status;
+			default:
+				return status;
+		}
 	});
 var $author$project$Photos$setHoveredPhotoId = F2(
 	function (hoveredPhotoId, status) {
@@ -11068,7 +11089,7 @@ var $author$project$Photos$update = F2(
 							status: A2($author$project$Photos$setHoveredPhotoId, hoveredPhotoId, model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'MouseLeft':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -11076,13 +11097,40 @@ var $author$project$Photos$update = F2(
 							status: A2($author$project$Photos$setHoveredPhotoId, '', model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
+			case 'ToggleFavorite':
+				var photoId = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							status: A2($author$project$Photos$setFavorite, photoId, model.status)
+						}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var photo = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							cartItems: _Utils_ap(
+								model.cartItems,
+								_List_fromArray(
+									[photo]))
+						}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$html$Html$main_ = _VirtualDom_node('main');
+var $author$project$Photos$AddToCart = function (a) {
+	return {$: 'AddToCart', a: a};
+};
 var $author$project$Photos$MouseEntered = function (a) {
 	return {$: 'MouseEntered', a: a};
 };
 var $author$project$Photos$MouseLeft = {$: 'MouseLeft'};
+var $author$project$Photos$ToggleFavorite = function (a) {
+	return {$: 'ToggleFavorite', a: a};
+};
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -11110,6 +11158,36 @@ var $author$project$Photos$getClass = function (index) {
 };
 var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
 var $elm$html$Html$Events$onMouseEnter = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -11128,8 +11206,8 @@ var $elm$html$Html$Attributes$src = function (url) {
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
-var $author$project$Photos$viewImage = F3(
-	function (hoveredPhotoId, index, photo) {
+var $author$project$Photos$viewImage = F4(
+	function (hoveredPhotoId, cartItems, index, photo) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -11158,10 +11236,13 @@ var $author$project$Photos$viewImage = F3(
 							$elm$html$Html$Attributes$classList(
 							_List_fromArray(
 								[
+									_Utils_Tuple2('ri-heart-fill favorite', photo.isFavorite),
 									_Utils_Tuple2(
 									'ri-heart-line favorite',
-									_Utils_eq(photo.id, hoveredPhotoId))
-								]))
+									_Utils_eq(photo.id, hoveredPhotoId) && (!photo.isFavorite))
+								])),
+							$elm$html$Html$Events$onClick(
+							$author$project$Photos$ToggleFavorite(photo.id))
 						]),
 					_List_Nil),
 					A2(
@@ -11172,15 +11253,20 @@ var $author$project$Photos$viewImage = F3(
 							_List_fromArray(
 								[
 									_Utils_Tuple2(
+									'ri-shopping-cart-fill cart',
+									A2($elm$core$List$member, photo, cartItems)),
+									_Utils_Tuple2(
 									'ri-add-circle-line cart',
-									_Utils_eq(photo.id, hoveredPhotoId))
-								]))
+									_Utils_eq(photo.id, hoveredPhotoId) && (!A2($elm$core$List$member, photo, cartItems)))
+								])),
+							$elm$html$Html$Events$onClick(
+							$author$project$Photos$AddToCart(photo))
 						]),
 					_List_Nil)
 				]));
 	});
-var $author$project$Photos$viewPhotos = F2(
-	function (photos, hoveredPhotoId) {
+var $author$project$Photos$viewPhotos = F3(
+	function (photos, hoveredPhotoId, cartItems) {
 		return A2(
 			$elm$html$Html$main_,
 			_List_fromArray(
@@ -11189,7 +11275,7 @@ var $author$project$Photos$viewPhotos = F2(
 				]),
 			A2(
 				$elm$core$List$indexedMap,
-				$author$project$Photos$viewImage(hoveredPhotoId),
+				A2($author$project$Photos$viewImage, hoveredPhotoId, cartItems),
 				photos));
 	});
 var $author$project$Photos$view = function (model) {
@@ -11204,7 +11290,7 @@ var $author$project$Photos$view = function (model) {
 					var hoveredPhotoId = _v0.b;
 					return _List_fromArray(
 						[
-							A2($author$project$Photos$viewPhotos, photos, hoveredPhotoId)
+							A3($author$project$Photos$viewPhotos, photos, hoveredPhotoId, model.cartItems)
 						]);
 				case 'Loading':
 					return _List_fromArray(
@@ -11223,4 +11309,4 @@ var $author$project$Photos$view = function (model) {
 var $author$project$Photos$main = $elm$browser$Browser$element(
 	{init: $author$project$Photos$init, subscriptions: $author$project$Photos$subscriptions, update: $author$project$Photos$update, view: $author$project$Photos$view});
 _Platform_export({'Photos':{'init':$author$project$Photos$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Photos.Msg","aliases":{"Photos.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"}},"unions":{"Photos.Msg":{"args":[],"tags":{"GotPhotos":["Result.Result Http.Error (List.List Photos.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Photos.Msg","aliases":{"Photos.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"}},"unions":{"Photos.Msg":{"args":[],"tags":{"GotPhotos":["Result.Result Http.Error (List.List Photos.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[],"ToggleFavorite":["String.String"],"AddToCart":["Photos.Photo"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
