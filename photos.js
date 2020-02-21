@@ -11013,6 +11013,17 @@ var $author$project$Photos$Loaded = F2(
 	function (a, b) {
 		return {$: 'Loaded', a: a, b: b};
 	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
 var $author$project$Photos$setFavorite = F2(
 	function (photoId, status) {
 		switch (status.$) {
@@ -11106,7 +11117,7 @@ var $author$project$Photos$update = F2(
 							status: A2($author$project$Photos$setFavorite, photoId, model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'AddToCart':
 				var photo = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -11117,6 +11128,19 @@ var $author$project$Photos$update = F2(
 								_List_fromArray(
 									[photo]))
 						}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var photoId = msg.a;
+				var updatedCartItems = A2(
+					$elm$core$List$filter,
+					function (photo) {
+						return !_Utils_eq(photoId, photo.id);
+					},
+					model.cartItems);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{cartItems: updatedCartItems}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -11150,6 +11174,9 @@ var $elm$html$Html$Attributes$src = function (url) {
 };
 var $author$project$Photos$AddToCart = function (a) {
 	return {$: 'AddToCart', a: a};
+};
+var $author$project$Photos$RemoveFromCart = function (a) {
+	return {$: 'RemoveFromCart', a: a};
 };
 var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$core$List$any = F2(
@@ -11196,7 +11223,9 @@ var $author$project$Photos$viewCartIcon = F3(
 			$elm$html$Html$i,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('ri-shopping-cart-fill cart')
+					$elm$html$Html$Attributes$class('ri-shopping-cart-fill cart'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Photos$RemoveFromCart(photo.id))
 				]),
 			_List_Nil) : (_Utils_eq(hoveredPhotoId, photo.id) ? A2(
 			$elm$html$Html$i,
@@ -11302,4 +11331,4 @@ var $author$project$Photos$view = function (model) {
 var $author$project$Photos$main = $elm$browser$Browser$element(
 	{init: $author$project$Photos$init, subscriptions: $author$project$Photos$subscriptions, update: $author$project$Photos$update, view: $author$project$Photos$view});
 _Platform_export({'Photos':{'init':$author$project$Photos$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Photos.Msg","aliases":{"Photos.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"}},"unions":{"Photos.Msg":{"args":[],"tags":{"GotPhotos":["Result.Result Http.Error (List.List Photos.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[],"ToggleFavorite":["String.String"],"AddToCart":["Photos.Photo"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Photos.Msg","aliases":{"Photos.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"}},"unions":{"Photos.Msg":{"args":[],"tags":{"GotPhotos":["Result.Result Http.Error (List.List Photos.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[],"ToggleFavorite":["String.String"],"AddToCart":["Photos.Photo"],"RemoveFromCart":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));

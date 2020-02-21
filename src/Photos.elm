@@ -76,6 +76,7 @@ type Msg
     | MouseLeft
     | ToggleFavorite String
     | AddToCart Photo
+    | RemoveFromCart String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -103,6 +104,13 @@ update msg model =
 
         AddToCart photo ->
             ( { model | cartItems = model.cartItems ++ [ photo ] }, Cmd.none )
+
+        RemoveFromCart photoId ->
+            let
+                updatedCartItems =
+                    List.filter (\photo -> photoId /= photo.id) model.cartItems
+            in
+            ( { model | cartItems = updatedCartItems }, Cmd.none )
 
 
 setHoveredPhotoId : String -> Status -> Status
@@ -196,7 +204,7 @@ viewHeartIcon hoveredPhotoId photo =
 viewCartIcon : String -> Photo -> CartItems -> Html Msg
 viewCartIcon hoveredPhotoId photo cartItems =
     if List.member photo.id (List.map .id cartItems) then
-        i [ class "ri-shopping-cart-fill cart" ] []
+        i [ class "ri-shopping-cart-fill cart", onClick (RemoveFromCart photo.id) ] []
 
     else if hoveredPhotoId == photo.id then
         i [ class "ri-add-circle-line cart", onClick (AddToCart photo) ] []
