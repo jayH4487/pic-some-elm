@@ -1,14 +1,14 @@
 module Main exposing (..)
 
-import Browser exposing (Document)
+import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (class, href, src)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Http
-import Photo exposing (..)
+import Photo exposing (Photo, photosDecoder)
 import Url exposing (Url)
-import Url.Parser as Parser exposing ((</>), Parser, s, string)
+import Url.Parser as Parser exposing (Parser, s)
 
 
 
@@ -199,17 +199,25 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "App"
     , body =
-        [ div [] [ viewHeader ]
+        [ div [] [ viewHeader model.cartItems ]
         , content model
         ]
     }
 
 
-viewHeader : Html Msg
-viewHeader =
+viewHeader : CartItems -> Html Msg
+viewHeader cartItems =
+    let
+        shoppingCartIcon =
+            if List.length cartItems > 0 then
+                "ri-shopping-cart-fill ri-fw ri-2x"
+
+            else
+                "ri-shopping-cart-line ri-fw ri-2x"
+    in
     header []
         [ a [ href "/" ] [ text "Pic Some" ]
-        , a [ href "/cart" ] [ i [ class "ri-shopping-cart-line ri-fw ri-2x" ] [] ]
+        , a [ href "/cart" ] [ i [ class shoppingCartIcon ] [] ]
         ]
 
 

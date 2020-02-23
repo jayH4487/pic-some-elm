@@ -11678,38 +11678,41 @@ var $author$project$Main$content = function (model) {
 	}
 };
 var $elm$html$Html$header = _VirtualDom_node('header');
-var $author$project$Main$viewHeader = A2(
-	$elm$html$Html$header,
-	_List_Nil,
-	_List_fromArray(
-		[
-			A2(
-			$elm$html$Html$a,
-			_List_fromArray(
-				[
-					$elm$html$Html$Attributes$href('/')
-				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text('Pic Some')
-				])),
-			A2(
-			$elm$html$Html$a,
-			_List_fromArray(
-				[
-					$elm$html$Html$Attributes$href('/cart')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$i,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('ri-shopping-cart-line ri-fw ri-2x')
-						]),
-					_List_Nil)
-				]))
-		]));
+var $author$project$Main$viewHeader = function (cartItems) {
+	var shoppingCartIcon = ($elm$core$List$length(cartItems) > 0) ? 'ri-shopping-cart-fill ri-fw ri-2x' : 'ri-shopping-cart-line ri-fw ri-2x';
+	return A2(
+		$elm$html$Html$header,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$a,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$href('/')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Pic Some')
+					])),
+				A2(
+				$elm$html$Html$a,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$href('/cart')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$i,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class(shoppingCartIcon)
+							]),
+						_List_Nil)
+					]))
+			]));
+};
 var $author$project$Main$view = function (model) {
 	return {
 		body: _List_fromArray(
@@ -11718,7 +11721,9 @@ var $author$project$Main$view = function (model) {
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
-					[$author$project$Main$viewHeader])),
+					[
+						$author$project$Main$viewHeader(model.cartItems)
+					])),
 				$author$project$Main$content(model)
 			]),
 		title: 'App'
