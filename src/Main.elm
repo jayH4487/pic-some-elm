@@ -3,10 +3,13 @@ module Main exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (class, href, src)
+import Html.Attributes exposing (class, href, src, width)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Http
 import Photo exposing (Photo, photosDecoder)
+import Process
+import Task
+import Time
 import Url exposing (Url)
 import Url.Parser as Parser exposing (Parser, s)
 
@@ -47,11 +50,19 @@ type Page
     | NotFound
 
 
+type alias CostItem =
+    { cultureCode : String
+    , currency : String
+    , cost : Float
+    }
+
+
 type alias Model =
     { key : Nav.Key
     , page : Page
     , status : Status
     , cartItems : CartItems
+    , orderBtnText : String
     }
 
 
@@ -69,6 +80,7 @@ init () url key =
       , page = urlToPage url
       , status = Loading
       , cartItems = []
+      , orderBtnText = "Place Order"
       }
     , initialCmd
     )
@@ -99,8 +111,10 @@ type Msg
     | MouseEntered String
     | MouseLeft
     | ToggleFavorite String
-    | AddToCart Photo
-    | RemoveFromCart String
+    | AddedToCart Photo
+    | RemovedFromCart String
+    | OrderPlaced
+    | OrderProcessed Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -137,15 +151,23 @@ update msg model =
         ToggleFavorite photoId ->
             ( { model | status = setFavorite photoId model.status }, Cmd.none )
 
-        AddToCart photo ->
+        AddedToCart photo ->
             ( { model | cartItems = model.cartItems ++ [ photo ] }, Cmd.none )
 
-        RemoveFromCart photoId ->
+        RemovedFromCart photoId ->
             let
                 updatedCartItems =
                     List.filter (\photo -> photoId /= photo.id) model.cartItems
             in
             ( { model | cartItems = updatedCartItems }, Cmd.none )
+
+        OrderPlaced ->
+            ( { model | orderBtnText = "Ordering..." }
+            , Task.perform OrderProcessed (Process.sleep 3000 |> Task.andThen (\_ -> Time.now))
+            )
+
+        OrderProcessed _ ->
+            ( { model | orderBtnText = "Place Order", cartItems = [] }, Cmd.none )
 
 
 setHoveredPhotoId : String -> Status -> Status
@@ -228,7 +250,7 @@ content model =
             viewHome model
 
         Cart ->
-            viewCart
+            viewCart model
 
         NotFound ->
             viewNotFound
@@ -282,10 +304,10 @@ viewHeartIcon hoveredPhotoId photo =
 viewCartIcon : String -> Photo -> CartItems -> Html Msg
 viewCartIcon hoveredPhotoId photo cartItems =
     if List.member photo.id (List.map .id cartItems) then
-        i [ class "ri-shopping-cart-fill cart", onClick (RemoveFromCart photo.id) ] []
+        i [ class "ri-shopping-cart-fill cart", onClick (RemovedFromCart photo.id) ] []
 
     else if hoveredPhotoId == photo.id then
-        i [ class "ri-add-circle-line cart", onClick (AddToCart photo) ] []
+        i [ class "ri-add-circle-line cart", onClick (AddedToCart photo) ] []
 
     else
         i [] []
@@ -303,9 +325,42 @@ getClass index =
         ""
 
 
-viewCart : Html Msg
-viewCart =
-    main_ [ class "cart-page" ] [ h1 [] [ text "Check out" ] ]
+viewCart : Model -> Html Msg
+viewCart model =
+    let
+        totalCost =
+            5.99 * toFloat (List.length model.cartItems)
+    in
+    main_ [ class "cart-page" ] <|
+        h1 [] [ text "Check out" ]
+            :: List.map viewCartItems model.cartItems
+            ++ [ p [ class "total-cost" ]
+                    [ text "Total: "
+                    , costItem { cultureCode = "en-GB", currency = "GBP", cost = totalCost }
+                    ]
+               , div
+                    [ class "order-button" ]
+                    [ button [ onClick OrderPlaced ] [ text model.orderBtnText ] ]
+               ]
+
+
+costItem : CostItem -> Html Msg
+costItem { cultureCode, currency, cost } =
+    Html.node "cost-item"
+        [ Html.Attributes.attribute "culture-code" cultureCode
+        , Html.Attributes.attribute "currency" currency
+        , Html.Attributes.attribute "cost" (String.fromFloat cost)
+        ]
+        []
+
+
+viewCartItems : Photo -> Html Msg
+viewCartItems photo =
+    div [ class "cart-item" ]
+        [ i [ class "ri-delete-bin-line", onClick (RemovedFromCart photo.id) ] []
+        , img [ src photo.url, width 130 ] []
+        , p [] [ text "£5.99" ]
+        ]
 
 
 viewNotFound : Html Msg

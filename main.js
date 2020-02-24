@@ -5130,7 +5130,53 @@ function _Url_percentDecode(string)
 	{
 		return $elm$core$Maybe$Nothing;
 	}
-}var $author$project$Main$ChangedUrl = function (a) {
+}
+
+
+function _Time_now(millisToPosix)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(millisToPosix(Date.now())));
+	});
+}
+
+var _Time_setInterval = F2(function(interval, task)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
+		return function() { clearInterval(id); };
+	});
+});
+
+function _Time_here()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(
+			A2($elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
+		));
+	});
+}
+
+
+function _Time_getZoneName()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		try
+		{
+			var name = $elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
+		}
+		catch (e)
+		{
+			var name = $elm$time$Time$Offset(new Date().getTimezoneOffset());
+		}
+		callback(_Scheduler_succeed(name));
+	});
+}
+var $author$project$Main$ChangedUrl = function (a) {
 	return {$: 'ChangedUrl', a: a};
 };
 var $author$project$Main$ClickedLink = function (a) {
@@ -11239,6 +11285,7 @@ var $author$project$Main$init = F3(
 			{
 				cartItems: _List_Nil,
 				key: key,
+				orderBtnText: 'Place Order',
 				page: $author$project$Main$urlToPage(url),
 				status: $author$project$Main$Loading
 			},
@@ -11256,6 +11303,9 @@ var $author$project$Main$Loaded = F2(
 	function (a, b) {
 		return {$: 'Loaded', a: a, b: b};
 	});
+var $author$project$Main$OrderProcessed = function (a) {
+	return {$: 'OrderProcessed', a: a};
+};
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -11268,6 +11318,22 @@ var $elm$core$List$filter = F2(
 			list);
 	});
 var $elm$browser$Browser$Navigation$load = _Browser_load;
+var $elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var $elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$customZone = $elm$time$Time$Zone;
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $author$project$Main$setFavorite = F2(
 	function (photoId, status) {
@@ -11302,6 +11368,7 @@ var $author$project$Main$setHoveredPhotoId = F2(
 				return status;
 		}
 	});
+var $elm$core$Process$sleep = _Process_sleep;
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -11431,7 +11498,7 @@ var $author$project$Main$update = F2(
 							status: A2($author$project$Main$setFavorite, photoId, model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 'AddToCart':
+			case 'AddedToCart':
 				var photo = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -11443,7 +11510,7 @@ var $author$project$Main$update = F2(
 									[photo]))
 						}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'RemovedFromCart':
 				var photoId = msg.a;
 				var updatedCartItems = A2(
 					$elm$core$List$filter,
@@ -11456,26 +11523,156 @@ var $author$project$Main$update = F2(
 						model,
 						{cartItems: updatedCartItems}),
 					$elm$core$Platform$Cmd$none);
+			case 'OrderPlaced':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{orderBtnText: 'Ordering...'}),
+					A2(
+						$elm$core$Task$perform,
+						$author$project$Main$OrderProcessed,
+						A2(
+							$elm$core$Task$andThen,
+							function (_v3) {
+								return $elm$time$Time$now;
+							},
+							$elm$core$Process$sleep(3000))));
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{cartItems: _List_Nil, orderBtnText: 'Place Order'}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$Main$OrderPlaced = {$: 'OrderPlaced'};
+var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $author$project$Main$costItem = function (_v0) {
+	var cultureCode = _v0.cultureCode;
+	var currency = _v0.currency;
+	var cost = _v0.cost;
+	return A3(
+		$elm$html$Html$node,
+		'cost-item',
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$attribute, 'culture-code', cultureCode),
+				A2($elm$html$Html$Attributes$attribute, 'currency', currency),
+				A2(
+				$elm$html$Html$Attributes$attribute,
+				'cost',
+				$elm$core$String$fromFloat(cost))
+			]),
+		_List_Nil);
+};
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$main_ = _VirtualDom_node('main');
-var $author$project$Main$viewCart = A2(
-	$elm$html$Html$main_,
-	_List_fromArray(
-		[
-			$elm$html$Html$Attributes$class('cart-page')
-		]),
-	_List_fromArray(
-		[
+var $author$project$Main$RemovedFromCart = function (a) {
+	return {$: 'RemovedFromCart', a: a};
+};
+var $elm$html$Html$i = _VirtualDom_node('i');
+var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $elm$html$Html$Attributes$width = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'width',
+		$elm$core$String$fromInt(n));
+};
+var $author$project$Main$viewCartItems = function (photo) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('cart-item')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$i,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('ri-delete-bin-line'),
+						$elm$html$Html$Events$onClick(
+						$author$project$Main$RemovedFromCart(photo.id))
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$img,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$src(photo.url),
+						$elm$html$Html$Attributes$width(130)
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('£5.99')
+					]))
+			]));
+};
+var $author$project$Main$viewCart = function (model) {
+	var totalCost = 5.99 * $elm$core$List$length(model.cartItems);
+	return A2(
+		$elm$html$Html$main_,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('cart-page')
+			]),
+		A2(
+			$elm$core$List$cons,
 			A2(
-			$elm$html$Html$h1,
-			_List_Nil,
-			_List_fromArray(
-				[
-					$elm$html$Html$text('Check out')
-				]))
-		]));
+				$elm$html$Html$h1,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Check out')
+					])),
+			_Utils_ap(
+				A2($elm$core$List$map, $author$project$Main$viewCartItems, model.cartItems),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$p,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('total-cost')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Total: '),
+								$author$project$Main$costItem(
+								{cost: totalCost, cultureCode: 'en-GB', currency: 'GBP'})
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('order-button')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Events$onClick($author$project$Main$OrderPlaced)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(model.orderBtnText)
+									]))
+							]))
+					]))));
+};
 var $author$project$Main$MouseEntered = function (a) {
 	return {$: 'MouseEntered', a: a};
 };
@@ -11484,7 +11681,6 @@ var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$getClass = function (index) {
 	return (!A2($elm$core$Basics$modBy, 5, index)) ? 'big' : ((!A2($elm$core$Basics$modBy, 6, index)) ? 'wide' : '');
 };
-var $elm$html$Html$img = _VirtualDom_node('img');
 var $elm$html$Html$Events$onMouseEnter = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -11497,19 +11693,9 @@ var $elm$html$Html$Events$onMouseLeave = function (msg) {
 		'mouseleave',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$html$Html$Attributes$src = function (url) {
-	return A2(
-		$elm$html$Html$Attributes$stringProperty,
-		'src',
-		_VirtualDom_noJavaScriptOrHtmlUri(url));
+var $author$project$Main$AddedToCart = function (a) {
+	return {$: 'AddedToCart', a: a};
 };
-var $author$project$Main$AddToCart = function (a) {
-	return {$: 'AddToCart', a: a};
-};
-var $author$project$Main$RemoveFromCart = function (a) {
-	return {$: 'RemoveFromCart', a: a};
-};
-var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -11556,7 +11742,7 @@ var $author$project$Main$viewCartIcon = F3(
 				[
 					$elm$html$Html$Attributes$class('ri-shopping-cart-fill cart'),
 					$elm$html$Html$Events$onClick(
-					$author$project$Main$RemoveFromCart(photo.id))
+					$author$project$Main$RemovedFromCart(photo.id))
 				]),
 			_List_Nil) : (_Utils_eq(hoveredPhotoId, photo.id) ? A2(
 			$elm$html$Html$i,
@@ -11564,7 +11750,7 @@ var $author$project$Main$viewCartIcon = F3(
 				[
 					$elm$html$Html$Attributes$class('ri-add-circle-line cart'),
 					$elm$html$Html$Events$onClick(
-					$author$project$Main$AddToCart(photo))
+					$author$project$Main$AddedToCart(photo))
 				]),
 			_List_Nil) : A2($elm$html$Html$i, _List_Nil, _List_Nil));
 	});
@@ -11672,7 +11858,7 @@ var $author$project$Main$content = function (model) {
 		case 'Home':
 			return $author$project$Main$viewHome(model);
 		case 'Cart':
-			return $author$project$Main$viewCart;
+			return $author$project$Main$viewCart(model);
 		default:
 			return $author$project$Main$viewNotFound;
 	}
@@ -11732,4 +11918,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$application(
 	{init: $author$project$Main$init, onUrlChange: $author$project$Main$ChangedUrl, onUrlRequest: $author$project$Main$ClickedLink, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Photo.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ClickedLink":["Browser.UrlRequest"],"ChangedUrl":["Url.Url"],"GotPhotos":["Result.Result Http.Error (List.List Photo.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[],"ToggleFavorite":["String.String"],"AddToCart":["Photo.Photo"],"RemoveFromCart":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Photo.Photo":{"args":[],"type":"{ url : String.String, id : String.String, isFavorite : Basics.Bool }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ClickedLink":["Browser.UrlRequest"],"ChangedUrl":["Url.Url"],"GotPhotos":["Result.Result Http.Error (List.List Photo.Photo)"],"MouseEntered":["String.String"],"MouseLeft":[],"ToggleFavorite":["String.String"],"AddedToCart":["Photo.Photo"],"RemovedFromCart":["String.String"],"OrderPlaced":[],"OrderProcessed":["Time.Posix"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
