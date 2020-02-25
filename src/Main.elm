@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (class, href, src, width)
+import Html.Attributes exposing (class, classList, href, src, width)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Http
 import Photo exposing (Photo, photosDecoder)
@@ -38,9 +38,13 @@ type alias CartItems =
     List Photo
 
 
+type alias HoveredPhotoId =
+    String
+
+
 type Status
     = Loading
-    | Loaded (List Photo) String
+    | Loaded (List Photo)
     | Errored String
 
 
@@ -63,6 +67,7 @@ type alias Model =
     , status : Status
     , cartItems : CartItems
     , orderBtnText : String
+    , hoveredPhotoId : HoveredPhotoId
     }
 
 
@@ -81,6 +86,7 @@ init () url key =
       , status = Loading
       , cartItems = []
       , orderBtnText = "Place Order"
+      , hoveredPhotoId = ""
       }
     , initialCmd
     )
@@ -134,7 +140,7 @@ update msg model =
         GotPhotos (Ok photos) ->
             case photos of
                 first :: rest ->
-                    ( { model | status = Loaded photos "" }, Cmd.none )
+                    ( { model | status = Loaded photos }, Cmd.none )
 
                 [] ->
                     ( { model | status = Errored "0 photos found" }, Cmd.none )
@@ -143,13 +149,13 @@ update msg model =
             ( { model | status = Errored "Server error!" }, Cmd.none )
 
         MouseEntered hoveredPhotoId ->
-            ( { model | status = setHoveredPhotoId hoveredPhotoId model.status }, Cmd.none )
+            ( { model | hoveredPhotoId = hoveredPhotoId }, Cmd.none )
 
         MouseLeft ->
-            ( { model | status = setHoveredPhotoId "" model.status }, Cmd.none )
+            ( { model | hoveredPhotoId = "" }, Cmd.none )
 
         ToggleFavorite photoId ->
-            ( { model | status = setFavorite photoId model.status }, Cmd.none )
+            ( { model | status = toggleFavorite photoId model.status }, Cmd.none )
 
         AddedToCart photo ->
             ( { model | cartItems = model.cartItems ++ [ photo ] }, Cmd.none )
@@ -170,23 +176,10 @@ update msg model =
             ( { model | orderBtnText = "Place Order", cartItems = [] }, Cmd.none )
 
 
-setHoveredPhotoId : String -> Status -> Status
-setHoveredPhotoId hoveredPhotoId status =
+toggleFavorite : String -> Status -> Status
+toggleFavorite photoId status =
     case status of
-        Loaded photos _ ->
-            Loaded photos hoveredPhotoId
-
-        Loading ->
-            status
-
-        Errored _ ->
-            status
-
-
-setFavorite : String -> Status -> Status
-setFavorite photoId status =
-    case status of
-        Loaded photos hoveredPhotoId ->
+        Loaded photos ->
             let
                 updatedPhotos =
                     List.map
@@ -199,7 +192,7 @@ setFavorite photoId status =
                         )
                         photos
             in
-            Loaded updatedPhotos hoveredPhotoId
+            Loaded updatedPhotos
 
         Loading ->
             status
@@ -247,21 +240,21 @@ content : Model -> Html Msg
 content model =
     case model.page of
         Home ->
-            viewHome model
+            viewHomePage model
 
         Cart ->
-            viewCart model
+            viewCartPage model
 
         NotFound ->
             viewNotFound
 
 
-viewHome : Model -> Html Msg
-viewHome model =
+viewHomePage : Model -> Html Msg
+viewHomePage model =
     div [] <|
         case model.status of
-            Loaded photos hoveredPhotoId ->
-                [ viewPhotos photos hoveredPhotoId model.cartItems ]
+            Loaded photos ->
+                [ viewPhotos photos model.hoveredPhotoId model.cartItems ]
 
             Loading ->
                 [ text "Loading..." ]
@@ -270,12 +263,12 @@ viewHome model =
                 [ text "Errored" ]
 
 
-viewPhotos : List Photo -> String -> CartItems -> Html Msg
+viewPhotos : List Photo -> HoveredPhotoId -> CartItems -> Html Msg
 viewPhotos photos hoveredPhotoId cartItems =
     main_ [ class "photos" ] (List.indexedMap (viewImage hoveredPhotoId cartItems) photos)
 
 
-viewImage : String -> CartItems -> Int -> Photo -> Html Msg
+viewImage : HoveredPhotoId -> CartItems -> Int -> Photo -> Html Msg
 viewImage hoveredPhotoId cartItems index photo =
     div
         [ class "image-container"
@@ -289,7 +282,7 @@ viewImage hoveredPhotoId cartItems index photo =
         ]
 
 
-viewHeartIcon : String -> Photo -> Html Msg
+viewHeartIcon : HoveredPhotoId -> Photo -> Html Msg
 viewHeartIcon hoveredPhotoId photo =
     if photo.isFavorite then
         i [ class "ri-heart-fill favorite", onClick (ToggleFavorite photo.id) ] []
@@ -301,7 +294,7 @@ viewHeartIcon hoveredPhotoId photo =
         i [] []
 
 
-viewCartIcon : String -> Photo -> CartItems -> Html Msg
+viewCartIcon : HoveredPhotoId -> Photo -> CartItems -> Html Msg
 viewCartIcon hoveredPhotoId photo cartItems =
     if List.member photo.id (List.map .id cartItems) then
         i [ class "ri-shopping-cart-fill cart", onClick (RemovedFromCart photo.id) ] []
@@ -325,23 +318,39 @@ getClass index =
         ""
 
 
-viewCart : Model -> Html Msg
-viewCart model =
+viewCartPage : Model -> Html Msg
+viewCartPage model =
     let
         totalCost =
             5.99 * toFloat (List.length model.cartItems)
     in
     main_ [ class "cart-page" ] <|
         h1 [] [ text "Check out" ]
-            :: List.map viewCartItems model.cartItems
+            :: List.map (viewCartItems model.hoveredPhotoId) model.cartItems
             ++ [ p [ class "total-cost" ]
                     [ text "Total: "
                     , costItem { cultureCode = "en-GB", currency = "GBP", cost = totalCost }
                     ]
-               , div
-                    [ class "order-button" ]
-                    [ button [ onClick OrderPlaced ] [ text model.orderBtnText ] ]
+               , viewPlaceOrderBtn model
                ]
+
+
+viewCartItems : HoveredPhotoId -> Photo -> Html Msg
+viewCartItems hoveredPhotoId photo =
+    div [ class "cart-item" ]
+        [ i
+            [ classList
+                [ ( "ri-delete-bin-fill", hoveredPhotoId == photo.id )
+                , ( "ri-delete-bin-line", hoveredPhotoId /= photo.id )
+                ]
+            , onClick (RemovedFromCart photo.id)
+            , onMouseEnter (MouseEntered photo.id)
+            , onMouseLeave MouseLeft
+            ]
+            []
+        , img [ src photo.url, width 130 ] []
+        , p [] [ text "£5.99" ]
+        ]
 
 
 costItem : CostItem -> Html Msg
@@ -354,13 +363,15 @@ costItem { cultureCode, currency, cost } =
         []
 
 
-viewCartItems : Photo -> Html Msg
-viewCartItems photo =
-    div [ class "cart-item" ]
-        [ i [ class "ri-delete-bin-line", onClick (RemovedFromCart photo.id) ] []
-        , img [ src photo.url, width 130 ] []
-        , p [] [ text "£5.99" ]
-        ]
+viewPlaceOrderBtn : Model -> Html Msg
+viewPlaceOrderBtn model =
+    if List.length model.cartItems > 0 then
+        div
+            [ class "order-button" ]
+            [ button [ onClick OrderPlaced ] [ text model.orderBtnText ] ]
+
+    else
+        p [] [ text "Cart is empty." ]
 
 
 viewNotFound : Html Msg

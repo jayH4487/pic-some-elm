@@ -11284,6 +11284,7 @@ var $author$project$Main$init = F3(
 		return _Utils_Tuple2(
 			{
 				cartItems: _List_Nil,
+				hoveredPhotoId: '',
 				key: key,
 				orderBtnText: 'Place Order',
 				page: $author$project$Main$urlToPage(url),
@@ -11299,10 +11300,9 @@ var $author$project$Main$subscriptions = function (model) {
 var $author$project$Main$Errored = function (a) {
 	return {$: 'Errored', a: a};
 };
-var $author$project$Main$Loaded = F2(
-	function (a, b) {
-		return {$: 'Loaded', a: a, b: b};
-	});
+var $author$project$Main$Loaded = function (a) {
+	return {$: 'Loaded', a: a};
+};
 var $author$project$Main$OrderProcessed = function (a) {
 	return {$: 'OrderProcessed', a: a};
 };
@@ -11335,39 +11335,6 @@ var $elm$time$Time$Posix = function (a) {
 var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
 var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
-var $author$project$Main$setFavorite = F2(
-	function (photoId, status) {
-		switch (status.$) {
-			case 'Loaded':
-				var photos = status.a;
-				var hoveredPhotoId = status.b;
-				var updatedPhotos = A2(
-					$elm$core$List$map,
-					function (photo) {
-						return _Utils_eq(photo.id, photoId) ? _Utils_update(
-							photo,
-							{isFavorite: !photo.isFavorite}) : photo;
-					},
-					photos);
-				return A2($author$project$Main$Loaded, updatedPhotos, hoveredPhotoId);
-			case 'Loading':
-				return status;
-			default:
-				return status;
-		}
-	});
-var $author$project$Main$setHoveredPhotoId = F2(
-	function (hoveredPhotoId, status) {
-		switch (status.$) {
-			case 'Loaded':
-				var photos = status.a;
-				return A2($author$project$Main$Loaded, photos, hoveredPhotoId);
-			case 'Loading':
-				return status;
-			default:
-				return status;
-		}
-	});
 var $elm$core$Process$sleep = _Process_sleep;
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -11413,6 +11380,26 @@ var $elm$url$Url$toString = function (url) {
 					_Utils_ap(http, url.host)),
 				url.path)));
 };
+var $author$project$Main$toggleFavorite = F2(
+	function (photoId, status) {
+		switch (status.$) {
+			case 'Loaded':
+				var photos = status.a;
+				var updatedPhotos = A2(
+					$elm$core$List$map,
+					function (photo) {
+						return _Utils_eq(photo.id, photoId) ? _Utils_update(
+							photo,
+							{isFavorite: !photo.isFavorite}) : photo;
+					},
+					photos);
+				return $author$project$Main$Loaded(updatedPhotos);
+			case 'Loading':
+				return status;
+			default:
+				return status;
+		}
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -11451,7 +11438,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									status: A2($author$project$Main$Loaded, photos, '')
+									status: $author$project$Main$Loaded(photos)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -11477,17 +11464,13 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{
-							status: A2($author$project$Main$setHoveredPhotoId, hoveredPhotoId, model.status)
-						}),
+						{hoveredPhotoId: hoveredPhotoId}),
 					$elm$core$Platform$Cmd$none);
 			case 'MouseLeft':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{
-							status: A2($author$project$Main$setHoveredPhotoId, '', model.status)
-						}),
+						{hoveredPhotoId: ''}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToggleFavorite':
 				var photoId = msg.a;
@@ -11495,7 +11478,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							status: A2($author$project$Main$setFavorite, photoId, model.status)
+							status: A2($author$project$Main$toggleFavorite, photoId, model.status)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'AddedToCart':
@@ -11545,7 +11528,6 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $author$project$Main$OrderPlaced = {$: 'OrderPlaced'};
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $author$project$Main$costItem = function (_v0) {
 	var cultureCode = _v0.cultureCode;
@@ -11567,11 +11549,37 @@ var $author$project$Main$costItem = function (_v0) {
 };
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$main_ = _VirtualDom_node('main');
+var $author$project$Main$MouseEntered = function (a) {
+	return {$: 'MouseEntered', a: a};
+};
+var $author$project$Main$MouseLeft = {$: 'MouseLeft'};
 var $author$project$Main$RemovedFromCart = function (a) {
 	return {$: 'RemovedFromCart', a: a};
 };
+var $elm$html$Html$Attributes$classList = function (classes) {
+	return $elm$html$Html$Attributes$class(
+		A2(
+			$elm$core$String$join,
+			' ',
+			A2(
+				$elm$core$List$map,
+				$elm$core$Tuple$first,
+				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
+};
 var $elm$html$Html$i = _VirtualDom_node('i');
 var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$Events$onMouseEnter = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'mouseenter',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Events$onMouseLeave = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'mouseleave',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		$elm$html$Html$Attributes$stringProperty,
@@ -11584,42 +11592,83 @@ var $elm$html$Html$Attributes$width = function (n) {
 		'width',
 		$elm$core$String$fromInt(n));
 };
-var $author$project$Main$viewCartItems = function (photo) {
-	return A2(
+var $author$project$Main$viewCartItems = F2(
+	function (hoveredPhotoId, photo) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('cart-item')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$i,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$classList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									'ri-delete-bin-fill',
+									_Utils_eq(hoveredPhotoId, photo.id)),
+									_Utils_Tuple2(
+									'ri-delete-bin-line',
+									!_Utils_eq(hoveredPhotoId, photo.id))
+								])),
+							$elm$html$Html$Events$onClick(
+							$author$project$Main$RemovedFromCart(photo.id)),
+							$elm$html$Html$Events$onMouseEnter(
+							$author$project$Main$MouseEntered(photo.id)),
+							$elm$html$Html$Events$onMouseLeave($author$project$Main$MouseLeft)
+						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$img,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$src(photo.url),
+							$elm$html$Html$Attributes$width(130)
+						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$p,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text('£5.99')
+						]))
+				]));
+	});
+var $author$project$Main$OrderPlaced = {$: 'OrderPlaced'};
+var $author$project$Main$viewPlaceOrderBtn = function (model) {
+	return ($elm$core$List$length(model.cartItems) > 0) ? A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('cart-item')
+				$elm$html$Html$Attributes$class('order-button')
 			]),
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$i,
+				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('ri-delete-bin-line'),
-						$elm$html$Html$Events$onClick(
-						$author$project$Main$RemovedFromCart(photo.id))
+						$elm$html$Html$Events$onClick($author$project$Main$OrderPlaced)
 					]),
-				_List_Nil),
-				A2(
-				$elm$html$Html$img,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$src(photo.url),
-						$elm$html$Html$Attributes$width(130)
-					]),
-				_List_Nil),
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('£5.99')
+						$elm$html$Html$text(model.orderBtnText)
 					]))
+			])) : A2(
+		$elm$html$Html$p,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Cart is empty.')
 			]));
 };
-var $author$project$Main$viewCart = function (model) {
+var $author$project$Main$viewCartPage = function (model) {
 	var totalCost = 5.99 * $elm$core$List$length(model.cartItems);
 	return A2(
 		$elm$html$Html$main_,
@@ -11637,7 +11686,10 @@ var $author$project$Main$viewCart = function (model) {
 						$elm$html$Html$text('Check out')
 					])),
 			_Utils_ap(
-				A2($elm$core$List$map, $author$project$Main$viewCartItems, model.cartItems),
+				A2(
+					$elm$core$List$map,
+					$author$project$Main$viewCartItems(model.hoveredPhotoId),
+					model.cartItems),
 				_List_fromArray(
 					[
 						A2(
@@ -11652,46 +11704,12 @@ var $author$project$Main$viewCart = function (model) {
 								$author$project$Main$costItem(
 								{cost: totalCost, cultureCode: 'en-GB', currency: 'GBP'})
 							])),
-						A2(
-						$elm$html$Html$div,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('order-button')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$button,
-								_List_fromArray(
-									[
-										$elm$html$Html$Events$onClick($author$project$Main$OrderPlaced)
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text(model.orderBtnText)
-									]))
-							]))
+						$author$project$Main$viewPlaceOrderBtn(model)
 					]))));
 };
-var $author$project$Main$MouseEntered = function (a) {
-	return {$: 'MouseEntered', a: a};
-};
-var $author$project$Main$MouseLeft = {$: 'MouseLeft'};
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$getClass = function (index) {
 	return (!A2($elm$core$Basics$modBy, 5, index)) ? 'big' : ((!A2($elm$core$Basics$modBy, 6, index)) ? 'wide' : '');
-};
-var $elm$html$Html$Events$onMouseEnter = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'mouseenter',
-		$elm$json$Json$Decode$succeed(msg));
-};
-var $elm$html$Html$Events$onMouseLeave = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'mouseleave',
-		$elm$json$Json$Decode$succeed(msg));
 };
 var $author$project$Main$AddedToCart = function (a) {
 	return {$: 'AddedToCart', a: a};
@@ -11817,7 +11835,7 @@ var $author$project$Main$viewPhotos = F3(
 				A2($author$project$Main$viewImage, hoveredPhotoId, cartItems),
 				photos));
 	});
-var $author$project$Main$viewHome = function (model) {
+var $author$project$Main$viewHomePage = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -11826,10 +11844,9 @@ var $author$project$Main$viewHome = function (model) {
 			switch (_v0.$) {
 				case 'Loaded':
 					var photos = _v0.a;
-					var hoveredPhotoId = _v0.b;
 					return _List_fromArray(
 						[
-							A3($author$project$Main$viewPhotos, photos, hoveredPhotoId, model.cartItems)
+							A3($author$project$Main$viewPhotos, photos, model.hoveredPhotoId, model.cartItems)
 						]);
 				case 'Loading':
 					return _List_fromArray(
@@ -11856,9 +11873,9 @@ var $author$project$Main$content = function (model) {
 	var _v0 = model.page;
 	switch (_v0.$) {
 		case 'Home':
-			return $author$project$Main$viewHome(model);
+			return $author$project$Main$viewHomePage(model);
 		case 'Cart':
-			return $author$project$Main$viewCart(model);
+			return $author$project$Main$viewCartPage(model);
 		default:
 			return $author$project$Main$viewNotFound;
 	}

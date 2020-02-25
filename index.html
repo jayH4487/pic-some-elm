@@ -45,7 +45,7 @@
                     this.render()
                 }
                 render() {
-                    let options = { style: "currency", currency: this._currency }
+                    let options = { style: "currency", currency: this._currency = "GBP" }
                     try {
                         let cost = this._cost.toLocaleString(this._cultureCode, options)
                         this.innerHTML = `<span>${cost}</span>`
