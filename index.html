@@ -14,7 +14,7 @@
 
     <body>
         <script>
-            const basePath = new URL(document.baseURI).pathname //new URL(document.baseURI).pathname process.env.PUBLIC_URL
+            const basePath = new URL(document.baseURI).pathname
             var app = Elm.Main.init({
                 flags: { basePath }
             })
