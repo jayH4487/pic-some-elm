@@ -221,25 +221,30 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "App"
     , body =
-        [ div [] [ viewHeader model.cartItems ]
+        [ div [] [ viewHeader model ]
         , content model
         ]
     }
 
 
-viewHeader : CartItems -> Html Msg
-viewHeader cartItems =
+viewHeader : Model -> Html Msg
+viewHeader model =
     let
         shoppingCartIcon =
-            if List.length cartItems > 0 then
+            if List.length model.cartItems > 0 then
                 "ri-shopping-cart-fill ri-fw ri-2x"
 
             else
                 "ri-shopping-cart-line ri-fw ri-2x"
     in
-    header []
-        [ a [ href "/" ] [ text "Pic Some" ]
-        , a [ href "/cart" ] [ i [ class shoppingCartIcon ] [] ]
+    div []
+        [ p []
+            [ text model.flags.basePath ]
+        , header
+            []
+            [ a [ href "/" ] [ text "Pic Some" ]
+            , a [ href "/cart" ] [ i [ class shoppingCartIcon ] [] ]
+            ]
         ]
 
 

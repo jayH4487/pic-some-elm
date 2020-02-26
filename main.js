@@ -7133,38 +7133,51 @@ var $elm$html$Html$Attributes$href = function (url) {
 		'href',
 		_VirtualDom_noJavaScriptUri(url));
 };
-var $author$project$Main$viewHeader = function (cartItems) {
-	var shoppingCartIcon = ($elm$core$List$length(cartItems) > 0) ? 'ri-shopping-cart-fill ri-fw ri-2x' : 'ri-shopping-cart-line ri-fw ri-2x';
+var $author$project$Main$viewHeader = function (model) {
+	var shoppingCartIcon = ($elm$core$List$length(model.cartItems) > 0) ? 'ri-shopping-cart-fill ri-fw ri-2x' : 'ri-shopping-cart-line ri-fw ri-2x';
 	return A2(
-		$elm$html$Html$header,
+		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$a,
+				$elm$html$Html$p,
+				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$href('/')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Pic Some')
+						$elm$html$Html$text(model.flags.basePath)
 					])),
 				A2(
-				$elm$html$Html$a,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$href('/cart')
-					]),
+				$elm$html$Html$header,
+				_List_Nil,
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$i,
+						$elm$html$Html$a,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class(shoppingCartIcon)
+								$elm$html$Html$Attributes$href('/')
 							]),
-						_List_Nil)
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Pic Some')
+							])),
+						A2(
+						$elm$html$Html$a,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$href('/cart')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$i,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class(shoppingCartIcon)
+									]),
+								_List_Nil)
+							]))
 					]))
 			]));
 };
@@ -7177,7 +7190,7 @@ var $author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$author$project$Main$viewHeader(model.cartItems)
+						$author$project$Main$viewHeader(model)
 					])),
 				$author$project$Main$content(model)
 			]),
