@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <base href="{{ BASE_URL }}">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>App</title>
+        <link href="https://fonts.googleapis.com/css?family=Oswald&display=swap" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+        <link rel="stylesheet" href="styles.css">
+        <script src="/main.js"></script>
+    </head>
+
+    <body>
+        <script>
+            const basePath = new URL(document.baseURI).pathname
+            var app = Elm.Main.init({
+                flags: { basePath }
+            })
+        </script>
+
+        <script>
+            window.customElements.define("cost-item", class extends HTMLElement {
+                constructor() {
+                    super()
+                    this._cost = parseFloat(this.getAttribute("cost"))
+                    this._currency = this.getAttribute("currency")
+                    this._cultureCode = this.getAttribute("culture-code")
+                }
+                static get observedAttributes() {
+                    return ["cost", "currency", "culture-code"]
+                }
+
+                attributeChangedCallback(name, prev, next) {
+                    if (!next) return
+                    switch (name) {
+                        case "cost":
+                            this._cost = parseFloat(next)
+                            break
+                        case "currency":
+                            this._currency = next
+                            break
+                        case "culture-code":
+                            this._cultureCode = next
+                            break
+                        default:
+                            break
+                    }
+
+                    this.render()
+                }
+                render() {
+                    let options = { style: "currency", currency: this._currency = "GBP" }
+                    try {
+                        let cost = this._cost.toLocaleString(this._cultureCode, options)
+                        this.innerHTML = `<span>${cost}</span>`
+                    } catch (err) {
+                        console.error(err)
+                    }
+                }
+            })
+        </script>
+    </body>
+
+</html>
