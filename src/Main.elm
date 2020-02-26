@@ -18,7 +18,7 @@ import Url.Parser as Parser exposing (Parser, s)
 --MAIN
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.application
         { init = init
@@ -32,6 +32,10 @@ main =
 
 
 --MODEL
+
+
+type alias Flags =
+    { basePath : String }
 
 
 type alias CartItems =
@@ -68,6 +72,7 @@ type alias Model =
     , cartItems : CartItems
     , orderBtnText : String
     , hoveredPhotoId : HoveredPhotoId
+    , flags : Flags
     }
 
 
@@ -79,22 +84,24 @@ initialCmd =
         }
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init () url key =
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init ({ basePath } as flags) url key =
     ( { key = key
-      , page = urlToPage url
+      , page = urlToPage basePath url
       , status = Loading
       , cartItems = []
       , orderBtnText = "Place Order"
       , hoveredPhotoId = ""
+      , flags = flags
       }
     , initialCmd
     )
 
 
-urlToPage : Url -> Page
-urlToPage url =
-    Parser.parse parser url
+urlToPage : String -> Url -> Page
+urlToPage basePath url =
+    { url | path = String.replace basePath "" url.path }
+        |> Parser.parse parser
         |> Maybe.withDefault NotFound
 
 
@@ -135,7 +142,7 @@ update msg model =
                     ( model, Nav.load href )
 
         ChangedUrl url ->
-            ( { model | page = urlToPage url }, Cmd.none )
+            ( { model | page = urlToPage model.flags.basePath url }, Cmd.none )
 
         GotPhotos (Ok photos) ->
             case photos of
