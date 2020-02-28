@@ -7107,13 +7107,6 @@ var $author$project$Main$viewHomePage = function (model) {
 			}
 		}());
 };
-var $author$project$Main$viewNotFound = A2(
-	$elm$html$Html$p,
-	_List_Nil,
-	_List_fromArray(
-		[
-			$elm$html$Html$text('Page Not Found')
-		]));
 var $author$project$Main$content = function (model) {
 	var _v0 = model.page;
 	switch (_v0.$) {
@@ -7122,7 +7115,7 @@ var $author$project$Main$content = function (model) {
 		case 'Cart':
 			return $author$project$Main$viewCartPage(model);
 		default:
-			return $author$project$Main$viewNotFound;
+			return $author$project$Main$viewHomePage(model);
 	}
 };
 var $elm$html$Html$a = _VirtualDom_node('a');
@@ -7140,13 +7133,7 @@ var $author$project$Main$viewHeader = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text(model.flags.basePath)
-					])),
+				A2($elm$html$Html$p, _List_Nil, _List_Nil),
 				A2(
 				$elm$html$Html$header,
 				_List_Nil,

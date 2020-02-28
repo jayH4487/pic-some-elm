@@ -239,7 +239,8 @@ viewHeader model =
     in
     div []
         [ p []
-            [ text model.flags.basePath ]
+            [-- text model.flags.basePath
+            ]
         , header
             []
             [ a [ href "/" ] [ text "Pic Some" ]
@@ -258,7 +259,7 @@ content model =
             viewCartPage model
 
         NotFound ->
-            viewNotFound
+            viewHomePage model
 
 
 viewHomePage : Model -> Html Msg

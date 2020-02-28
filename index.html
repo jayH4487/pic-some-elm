@@ -14,8 +14,7 @@
 
     <body>
         <script>
-            // const basePath = new URL(document.baseURI).pathname
-            const basePath = location.href
+            const basePath = new URL(document.baseURI).pathname
             var app = Elm.Main.init({
                 flags: { basePath }
             })
