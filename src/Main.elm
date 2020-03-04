@@ -73,6 +73,7 @@ type alias Model =
     , orderBtnText : String
     , hoveredPhotoId : HoveredPhotoId
     , flags : Flags
+    , url : Url.Url
     }
 
 
@@ -93,6 +94,7 @@ init ({ basePath } as flags) url key =
       , orderBtnText = "Place Order"
       , hoveredPhotoId = ""
       , flags = flags
+      , url = url
       }
     , initialCmd
     )
@@ -142,7 +144,7 @@ update msg model =
                     ( model, Nav.load href )
 
         ChangedUrl url ->
-            ( { model | page = urlToPage model.flags.basePath url }, Cmd.none )
+            ( { model | page = urlToPage model.flags.basePath url, url = url }, Cmd.none )
 
         GotPhotos (Ok photos) ->
             case photos of
@@ -236,15 +238,22 @@ viewHeader model =
 
             else
                 "ri-shopping-cart-line ri-fw ri-2x"
+
+        basePath =
+            if model.flags.basePath == "/index.html" then
+                ""
+
+            else
+                model.flags.basePath
     in
     div []
         [ p []
-            [-- text model.flags.basePath
+            [-- text (Url.toString model.url ++ "-" ++ model.flags.basePath)
             ]
         , header
             []
-            [ a [ href "/" ] [ text "Pic Some" ]
-            , a [ href "/cart" ] [ i [ class shoppingCartIcon ] [] ]
+            [ a [ href (basePath ++ "/") ] [ text "Pic Some" ]
+            , a [ href (basePath ++ "/cart") ] [ i [ class shoppingCartIcon ] [] ]
             ]
         ]
 
